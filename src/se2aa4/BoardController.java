@@ -1,6 +1,7 @@
 package se2aa4;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
@@ -16,6 +17,9 @@ public class BoardController implements ActionListener, Observer {
 	private BoardModel boardModel;
 	private GameStateModel stateModel;
 	private HashMap<GameState, BoardPanels> panelMap;
+	
+	private static final String stateFileName = "gamestate.bin";
+	private static final String boardFileName = "board.bin";
 	
 	/**
 	 * Initializes the board controller and it's associated
@@ -41,6 +45,8 @@ public class BoardController implements ActionListener, Observer {
 		panelMap.put(GameState.START_STATE, BoardPanels.START);
 		panelMap.put(GameState.EDIT_STATE, BoardPanels.EDIT);
 		panelMap.put(GameState.PLAY_STATE, BoardPanels.PLAY);
+		panelMap.put(GameState.WIN_STATE, BoardPanels.EMPTY);
+		panelMap.put(GameState.DRAW_STATE, BoardPanels.EMPTY);
 	}
 	
 	/**
@@ -60,9 +66,27 @@ public class BoardController implements ActionListener, Observer {
 		case BOARD_BUTTON:
 			// If a button on the game board was pressed in the edit state
 			// set that position to be the current edit color
+			Vector2D buttonPosition = view.lookupButtonPosition(e.getSource());
 			if (stateModel.getState() == GameState.EDIT_STATE) {
-				Vector2D position = view.lookupButtonPosition(e.getSource());
-				boardModel.setGridPiece(position, stateModel.getEditColor());
+				boardModel.setGridPiece(buttonPosition, stateModel.getEditColor());
+			} else if (stateModel.getState() == GameState.PLAY_STATE) {
+				// If the piece was successfully added
+				if (boardModel.dropPiece(buttonPosition.x, stateModel.getCurrentPlayer())) {
+					// Check if this move is a winning move
+					PlayerColor winner = boardModel.getWinner();
+					// If there is no winner it is the next player's turn
+					if (winner == PlayerColor.NONE)  {
+						stateModel.nextTurn();
+					} else {
+						// If there is a winner go to the win state
+						stateModel.setState(GameState.WIN_STATE);
+					}
+				}
+				
+				// If there are no more empty spaces and there was no winner, there must be a draw
+				if (boardModel.getPieceCount(PlayerColor.NONE) == 0 && stateModel.getState() != GameState.WIN_STATE) {
+					stateModel.setState(GameState.DRAW_STATE);
+				}
 			}
 			break;
 		case NEW_GAME_BUTTON:
@@ -108,7 +132,7 @@ public class BoardController implements ActionListener, Observer {
 					valid = false;
 				}
 				
-				// Make sure there are no floating pieces and if there is highligh them
+				// Make sure there are no floating pieces and if there is highlight them
 				Vector2D[] errors = boardModel.getErrorPositions();
 				if (errors != null) {
 					errorMessage = "There are floating pieces";
@@ -118,7 +142,7 @@ public class BoardController implements ActionListener, Observer {
 					valid = false;
 				}
 				
-				// If valid moce to the PLAY_STATE and figure out who should go first
+				// If valid move to the PLAY_STATE and figure out who should go first
 				if (valid) {
 					stateModel.setState(GameState.PLAY_STATE);
 					stateModel.setCurrentPlayer(boardModel.getStartPlayer());
@@ -126,6 +150,26 @@ public class BoardController implements ActionListener, Observer {
 					// Or else an error happened in which case the error should be displayed
 					view.setTitleLabel(errorMessage);
 				}
+			}
+			break;
+		case LOAD_BUTTON:
+			try {
+				stateModel.loadFromFile(stateFileName);
+				boardModel.loadFromFile(boardFileName);
+				view.setStatusLabel("Load successful.");
+			} catch (IOException exception) {
+				view.setStatusLabel("An error occured while loading or no save exists.");
+			}
+			break;
+		case SAVE_BUTTON:
+			try {
+				// Save the models to files and if an error happens
+				// display an appropriate message
+				stateModel.saveToFile(stateFileName);
+				boardModel.saveToFile(boardFileName);
+				view.setStatusLabel("Save successful.");
+			} catch (IOException exception) {
+				view.setStatusLabel("An error occured while saving.");
 			}
 			break;
 		default:
@@ -160,13 +204,22 @@ public class BoardController implements ActionListener, Observer {
 			
 			// If the current state is the PLAY_STATE the current player could
 			// have been updated so update the view
+			PlayerColor currentPlayer = stateModel.getCurrentPlayer();
 			if (currentState == GameState.PLAY_STATE) {
-				PlayerColor currentPlayer = stateModel.getCurrentPlayer();
 				// If the current player is NONE that is invalid so ignore it
 				if (currentPlayer != PlayerColor.NONE) {
 					view.setTitleLabel(currentPlayer.toString() + "'s turn");
 				}
+			} else if (currentState == GameState.WIN_STATE) {
+				// If a player won the game display a winning message
+				view.setTitleLabel(currentPlayer.toString() + " won!");
+			} else if (currentState == GameState.DRAW_STATE) {
+				// If there is a draw display the draw message
+				view.setTitleLabel("Draw :(");
 			}
+			
+			// Can clear the status if the state changes
+			view.setStatusLabel(" ");
 		}
 	}
 	

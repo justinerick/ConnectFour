@@ -1,4 +1,9 @@
 package se2aa4;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Observable;
 
 /**
@@ -40,9 +45,9 @@ public class BoardModel extends Observable {
 	}
 
 	/**
-	 * Set the given position on the board to the given colour.
-	 * @param position the position on the board to change the colour of
-	 * @param color the colour to set that position to
+	 * Set the given position on the board to the given color.
+	 * @param position the position on the board to change the color of
+	 * @param color the color to set that position to
 	 */
 	public void setGridPiece(Vector2D position, PlayerColor color) {
 		pieceGrid[position.x][position.y] = color;
@@ -51,9 +56,9 @@ public class BoardModel extends Observable {
 	}
 
 	/**
-	 * Find what colour piece, if any, is at the given spot on the board
-	 * @param position the position on the board to check the colour of
-	 * @return return the colour of of that position
+	 * Find what color piece, if any, is at the given spot on the board
+	 * @param position the position on the board to check the color of
+	 * @return return the color of of that position
 	 */
 	public PlayerColor getGridPiece(Vector2D position) {
 		return pieceGrid[position.x][position.y];
@@ -98,8 +103,8 @@ public class BoardModel extends Observable {
 		for (int x = 0; x < GRID_WIDTH-3; x++)				//All possible starting points
 			for (int y = 0; y < GRID_HEIGHT; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){	//Check for a red or blue piece in that spot
-					winner = pieceGrid[x][y];				//Use 'winner' to hold the colour of this potential win
-					for (int i = 1; i < 4; i++)				//Check if the other 3 spots needed are the same colour
+					winner = pieceGrid[x][y];				//Use 'winner' to hold the color of this potential win
+					for (int i = 1; i < 4; i++)				//Check if the other 3 spots needed are the same color
 						if (pieceGrid[x+i][y] != winner){
 							winner = PlayerColor.NONE;		//If not set 'winner' back to none and stop checking this one
 							break;
@@ -154,7 +159,7 @@ public class BoardModel extends Observable {
 
 	/**
 	 * Counts the number of pieces of a given player.
-	 * @param colour which player to count the number of pieces for
+	 * @param color which player to count the number of pieces for
 	 * @return the number of pieces found for that player
 	 */
 	public int getPieceCount(PlayerColor color) {
@@ -170,7 +175,7 @@ public class BoardModel extends Observable {
 
 	/**
 	 * Determines which player, if any, has more game pieces on the board
-	 * @return which colour has more pieces, or NONE if they both have the same amount
+	 * @return which color has more pieces, or NONE if they both have the same amount
 	 */
 	public PlayerColor whoHasMorePieces(){
 		if (getPieceCount(PlayerColor.RED) > getPieceCount(PlayerColor.BLUE))
@@ -183,7 +188,7 @@ public class BoardModel extends Observable {
 	
 	/**
 	 * Determines which player, if any, has too many game pieces compared to the other player
-	 * @return which colour has more pieces by at least 2, or NONE if the difference is less than 2
+	 * @return which color has more pieces by at least 2, or NONE if the difference is less than 2
 	 */
 	public PlayerColor getErrorColor(){
 		if (Math.abs(getPieceCount(PlayerColor.RED) - getPieceCount(PlayerColor.BLUE)) > 1)
@@ -194,12 +199,12 @@ public class BoardModel extends Observable {
 	
 	/**
 	 * Determines which player should start, depending on the pieces already on the board 
-	 * @return which colour should start, or NONE if there's an error regarding the number of pieces of each colour
+	 * @return which color should start, or NONE if there's an error regarding the number of pieces of each color
 	 */
 	public PlayerColor getStartPlayer(){
-		if (getErrorColor() == PlayerColor.NONE)	//If there's an error regarding the number of pieces of each colour, stop and return NONE
+		if (getErrorColor() == PlayerColor.NONE)	//If there's an error regarding the number of pieces of each color, stop and return NONE
 			switch (whoHasMorePieces()){			
-			case RED: return PlayerColor.BLUE;		//If there's no error, and one colour has more pieces than the other, return the other colour
+			case RED: return PlayerColor.BLUE;		//If there's no error, and one color has more pieces than the other, return the other color
 			case BLUE: return PlayerColor.RED;		
 			case NONE: 
 				if (Math.round(Math.random()) == 1)	//If there's the same number of red and blue pieces, randomly return either red or blue
@@ -210,14 +215,69 @@ public class BoardModel extends Observable {
 		return PlayerColor.NONE;
 	}
 	
-	//temporary test method
-	public static void main(String[] args){
-		BoardModel b = new BoardModel();
-		for(int i = 0; i < 4; i++){
-			b.setGridPiece(new Vector2D(0+i,2+i), PlayerColor.RED);
-			b.setGridPiece(new Vector2D(5,2+i), PlayerColor.RED);
+	/**
+	 * Drops a piece from the top of the board and lets it fall to the lowest
+	 * available position. Returns true if there was room.
+	 * @param column the column to drop the piece into
+	 * @param color the color of the piece to drop
+	 * @return true if the piece fit and false if the column is full
+	 */
+	public boolean dropPiece(int column, PlayerColor color) {
+		boolean success = false;
+		// This works by trying every spot starting from the bottom
+		// and placing the piece in the first empty spot it finds
+		for (int row = GRID_HEIGHT - 1; row >= 0; row--) {
+			if (pieceGrid[column][row] == PlayerColor.NONE) {
+				setGridPiece(new Vector2D(column, row), color);
+				success = true;
+				break;
+			}
 		}
-		System.out.println(b.getWinner());
+		
+		return success;
+	}
+	
+	/**
+	 * Captures the current state of this object and stores it in a file
+	 * for later retrieval.
+	 * @param fileName the file to store the state in
+	 * @throws IOException
+	 */
+	public void saveToFile(String fileName) throws IOException {
+		DataOutputStream outStream = new DataOutputStream(new FileOutputStream(fileName, false));
+		// There are less than 255 colors for the player to be
+		// so it should be safe to store it in a byte
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			for (int y = 0; y < GRID_HEIGHT; y++) {
+				outStream.writeByte(pieceGrid[x][y].ordinal());
+			}
+		}
+		
+		outStream.close();
+	}
+	
+	/**
+	 * Reloads the state of this object from a previously saved state
+	 * stored in the specified file.
+	 * @param fileName the file to load the state in
+	 * @throws IOException
+	 */
+	public void loadFromFile(String fileName) throws IOException {
+		DataInputStream inStream = new DataInputStream(new FileInputStream(fileName));
+		// Load the stored bytes back in and convert them
+		// back into enums
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			for (int y = 0; y < GRID_HEIGHT; y++) {
+				pieceGrid[x][y] = PlayerColor.values()[inStream.readByte()];
+			}
+		}
+		
+		inStream.close();
+		
+		// This lets the observers know the state has changed
+		// since after loading the state could be very different
+		setChanged();
+		notifyObservers();
 	}
 }
 

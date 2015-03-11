@@ -10,5 +10,7 @@ public enum BoardComponentType {
 	RED_BUTTON,
 	BLUE_BUTTON,
 	NONE_BUTTON,
-	DONE_BUTTON
+	DONE_BUTTON,
+	LOAD_BUTTON,
+	SAVE_BUTTON
 }

@@ -35,6 +35,7 @@ public class BoardView {
 	
 	private JFrame frame;
 	private JLabel titleLabel;
+	private JLabel statusLabel;
 	private JButton[][] pieceGrid;
 	private JPanel menuPanel;
 	private CardLayout menuLayout;
@@ -172,11 +173,15 @@ public class BoardView {
 		JPanel startPanel = new JPanel();
 		JButton newGameButton = new JButton("New Game");
 		JButton editButton = new JButton("Edit");
+		JButton loadButton = new JButton("Load Game");
 		componentMap.put(newGameButton, BoardComponentType.NEW_GAME_BUTTON);
 		componentMap.put(editButton, BoardComponentType.EDIT_BUTTON);
+		componentMap.put(loadButton, BoardComponentType.LOAD_BUTTON);
 		newGameButton.addActionListener(controller);
 		editButton.addActionListener(controller);
+		loadButton.addActionListener(controller);
 		startPanel.add(newGameButton);
+		startPanel.add(loadButton);
 		startPanel.add(editButton);
 		
 		JPanel editPanel = new JPanel();
@@ -198,18 +203,30 @@ public class BoardView {
 		editPanel.add(doneButton);
 		
 		JPanel playPanel = new JPanel();
-		playPanel.add(new JLabel("Play!"));
+		JButton saveButton = new JButton("Save Game");
+		saveButton.addActionListener(controller);
+		componentMap.put(saveButton, BoardComponentType.SAVE_BUTTON);
+		playPanel.add(saveButton);
+		
+		JPanel emptyPanel = new JPanel();
 		
 		menuLayout = new CardLayout();
 		menuPanel = new JPanel(menuLayout);
 		menuPanel.add(startPanel, BoardPanels.START.toString());
 		menuPanel.add(editPanel, BoardPanels.EDIT.toString());
 		menuPanel.add(playPanel, BoardPanels.PLAY.toString());
+		menuPanel.add(emptyPanel, BoardPanels.EMPTY.toString());
 		
 		GridBagConstraints gbc_menuPanel = new GridBagConstraints();
 		gbc_menuPanel.gridx = 1;
 		gbc_menuPanel.gridy = 3;
 		contentPanel.add(menuPanel, gbc_menuPanel);
+		
+		statusLabel = new JLabel(" ");
+		GridBagConstraints gbc_statusLabel = new GridBagConstraints();
+		gbc_statusLabel.gridx = 1;
+		gbc_statusLabel.gridy = 4;
+		contentPanel.add(statusLabel, gbc_statusLabel);
 		
 		frame.pack();
 		frame.setLocationRelativeTo(null);
@@ -360,5 +377,13 @@ public class BoardView {
 	 */
 	public void setTitleLabel(String text) {
 		titleLabel.setText(text);
+	}
+	
+	/**
+	 * Sets the status label.
+	 * @param text the new text of the label
+	 */
+	public void setStatusLabel(String text) {
+		statusLabel.setText(text);
 	}
 }

@@ -4,6 +4,5 @@ package se2aa4;
  * of the menu to be displayed.
  */
 public enum BoardPanels {
-	START,EDIT,PLAY;
-
+	EMPTY,START,EDIT,PLAY;
 }

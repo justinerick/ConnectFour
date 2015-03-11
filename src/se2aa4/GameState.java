@@ -6,5 +6,7 @@ package se2aa4;
 public enum GameState {
 	START_STATE,
 	EDIT_STATE,
-	PLAY_STATE
+	PLAY_STATE,
+	WIN_STATE,
+	DRAW_STATE
 }
