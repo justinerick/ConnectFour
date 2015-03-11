@@ -96,65 +96,94 @@ public class BoardModel extends Observable {
 	 * @return the color of the first player found with a connect four, or NONE if there is no winner
 	 */
 	public PlayerColor getWinner() {
+		Vector2D[] winner = getWinningPieces();
+		if(winner[0] == null)
+			return PlayerColor.NONE;
+		else
+			return pieceGrid[winner[0].x][winner[0].y];
+	}
+	
+	/**
+	 * Determine the locations of the pieces of the winning connect four, if there is one.
+	 * @return an array containing the locations of the four winning pieces, or an empty array (all elements are null) if there is no winner
+	 */
+	public Vector2D[] getWinningPieces(){
 		
-		PlayerColor winner = PlayerColor.NONE;
+		PlayerColor checkColor = PlayerColor.NONE;
+		Vector2D[] winPieces = new Vector2D[4];
 
 		//Check the leftmost spots of all possible horizontal connect fours
 		for (int x = 0; x < GRID_WIDTH-3; x++)				//All possible starting points
 			for (int y = 0; y < GRID_HEIGHT; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){	//Check for a red or blue piece in that spot
-					winner = pieceGrid[x][y];				//Use 'winner' to hold the color of this potential win
-					for (int i = 1; i < 4; i++)				//Check if the other 3 spots needed are the same color
-						if (pieceGrid[x+i][y] != winner){
-							winner = PlayerColor.NONE;		//If not set 'winner' back to none and stop checking this one
+					checkColor = pieceGrid[x][y];				//Use 'checkColor' to hold the color of this potential win
+					winPieces[0] = new Vector2D(x, y);
+					for (int i = 1; i < 4; i++){				//Check if the other 3 spots needed are the same color
+						winPieces[i] = new Vector2D(x+i, y);		//Record the location of each spot checked
+						if (pieceGrid[x+i][y] != checkColor){
+							checkColor = PlayerColor.NONE;			//If not set 'checkColor' back to none and stop checking this one
+							winPieces = new Vector2D[4];			//Clear any positions recorded in 'winPieces'
 							break;
 						}
-					if (winner != PlayerColor.NONE)			 
-						return winner;						//If a connect four was found, return the color of the winner
+					}
+					if (checkColor != PlayerColor.NONE)			 
+						return winPieces;						//If a connect four was found, return the color of the checkColor
 				}
 		
 		//Check the top spots of all possible vertical connect fours
 		for (int x = 0; x < GRID_WIDTH; x++)
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
-					winner = pieceGrid[x][y];
-					for (int i = 1; i < 4; i++)
-						if (pieceGrid[x][y+i] != winner){
-							winner = PlayerColor.NONE;
+					checkColor = pieceGrid[x][y];
+					winPieces[0] = new Vector2D(x, y);
+					for (int i = 1; i < 4; i++){
+						winPieces[i] = new Vector2D(x, y+i);
+						if (pieceGrid[x][y+i] != checkColor){
+							checkColor = PlayerColor.NONE;
+							winPieces = new Vector2D[4];
 							break;
 						}
-					if (winner != PlayerColor.NONE)
-						return winner;
+					}
+					if (checkColor != PlayerColor.NONE)
+						return winPieces;
 				}
 		
 		//Check the top-left spots of all possible "\"-diagonal connect fours
 		for (int x = 0; x < GRID_WIDTH-3; x++)
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
-					winner = pieceGrid[x][y];
-					for (int i = 1; i < 4; i++)
-						if (pieceGrid[x+i][y+i] != winner){
-							winner = PlayerColor.NONE;
+					checkColor = pieceGrid[x][y];
+					winPieces[0] = new Vector2D(x, y);
+					for (int i = 1; i < 4; i++){
+						winPieces[i] = new Vector2D(x+i, y+i);
+						if (pieceGrid[x+i][y+i] != checkColor){
+							checkColor = PlayerColor.NONE;
+							winPieces = new Vector2D[4];
 							break;
 						}	
-					if (winner != PlayerColor.NONE)
-						return winner;
+					}
+					if (checkColor != PlayerColor.NONE)
+						return winPieces;
 				}
 		
 		//Check the top-right of all possible "/"-diagonal connect fours
 		for (int x = 3; x < GRID_WIDTH; x++)
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
-					winner = pieceGrid[x][y];
-					for (int i = 1; i < 4; i++)
-						if (pieceGrid[x-i][y+i] != winner){
-							winner = PlayerColor.NONE;
+					checkColor = pieceGrid[x][y];
+					winPieces[0] = new Vector2D(x, y);
+					for (int i = 1; i < 4; i++){
+						winPieces[i] = new Vector2D(x-i, y+i);
+						if (pieceGrid[x-i][y+i] != checkColor){
+							checkColor = PlayerColor.NONE;
+							winPieces = new Vector2D[4];
 							break;
 						}
-					if (winner != PlayerColor.NONE)
-						return winner;
+					}
+					if (checkColor != PlayerColor.NONE)
+						return winPieces;
 				}
-		return winner;
+		return winPieces;
 	}
 
 	/**

@@ -157,7 +157,7 @@ public class BoardController implements ActionListener, Observer {
 				stateModel.loadFromFile(stateFileName);
 				boardModel.loadFromFile(boardFileName);
 				view.setStatusLabel("Load successful.");
-			} catch (IOException exception) {
+			} catch (Exception exception) {
 				view.setStatusLabel("An error occured while loading or no save exists.");
 			}
 			break;
@@ -213,6 +213,10 @@ public class BoardController implements ActionListener, Observer {
 			} else if (currentState == GameState.WIN_STATE) {
 				// If a player won the game display a winning message
 				view.setTitleLabel(currentPlayer.toString() + " won!");
+				// Highlight the winning connect four pieces
+				for (Vector2D winPosition : boardModel.getWinningPieces()) {
+					view.highlightPiece(winPosition);
+				}
 			} else if (currentState == GameState.DRAW_STATE) {
 				// If there is a draw display the draw message
 				view.setTitleLabel("Draw :(");
