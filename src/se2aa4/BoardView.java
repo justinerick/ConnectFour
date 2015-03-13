@@ -50,7 +50,7 @@ public class BoardView {
 	private BoardController controller;
 	
 	private HashMap<Object, BoardComponentType> componentMap;
-	private HashMap<Object, Vector2D> buttonPositionMap;
+	private HashMap<Object, Position> buttonPositionMap;
 	
 	/**
 	 * Initialize the view. When the constructor completes, 
@@ -85,7 +85,7 @@ public class BoardView {
 		// This method contains ugly GUI code!
 		
 		componentMap = new HashMap<Object, BoardComponentType>();
-		buttonPositionMap = new HashMap<Object, Vector2D>();
+		buttonPositionMap = new HashMap<Object, Position>();
 		
 		emptyPiece = new ImageIcon(createPieceImage(PlayerColor.NONE, Color.BLACK));
 		bluePiece = new ImageIcon(createPieceImage(PlayerColor.BLUE, Color.BLACK));
@@ -161,7 +161,7 @@ public class BoardView {
 			for (int x = 0; x < BOARD_WIDTH; x++) {
 				JButton piece = new JButton(emptyPiece);
 				componentMap.put(piece, BoardComponentType.BOARD_BUTTON);
-				buttonPositionMap.put(piece, new Vector2D(x,y));
+				buttonPositionMap.put(piece, new Position(x,y));
 				piece.addActionListener(controller);
 				piece.setBorder(BorderFactory.createEmptyBorder());
 				piece.setContentAreaFilled(false);
@@ -189,24 +189,38 @@ public class BoardView {
 		JButton redButton = new JButton("Red");
 		JButton noneButton = new JButton("None");
 		JButton doneButton = new JButton("Done");
+		JButton mainMenuButton1 = new JButton("Main Menu");
 		componentMap.put(blueButton, BoardComponentType.BLUE_BUTTON);
 		componentMap.put(redButton, BoardComponentType.RED_BUTTON);
 		componentMap.put(noneButton, BoardComponentType.NONE_BUTTON);
 		componentMap.put(doneButton, BoardComponentType.DONE_BUTTON);
+		componentMap.put(mainMenuButton1, BoardComponentType.MAIN_MENU_BUTTON);
 		blueButton.addActionListener(controller);
 		redButton.addActionListener(controller);
 		noneButton.addActionListener(controller);
 		doneButton.addActionListener(controller);
+		mainMenuButton1.addActionListener(controller);
 		editPanel.add(blueButton);
 		editPanel.add(redButton);
 		editPanel.add(noneButton);
 		editPanel.add(doneButton);
+		editPanel.add(mainMenuButton1);
 		
 		JPanel playPanel = new JPanel();
 		JButton saveButton = new JButton("Save Game");
+		JButton mainMenuButton2 = new JButton("Main Menu"); // Need 2 because buttons can only have one parent
 		saveButton.addActionListener(controller);
+		mainMenuButton2.addActionListener(controller);
 		componentMap.put(saveButton, BoardComponentType.SAVE_BUTTON);
+		componentMap.put(mainMenuButton2, BoardComponentType.MAIN_MENU_BUTTON);
 		playPanel.add(saveButton);
+		playPanel.add(mainMenuButton2);
+		
+		JPanel winPanel = new JPanel();
+		JButton mainMenuButton3 = new JButton("Main Menu");
+		mainMenuButton3.addActionListener(controller);
+		componentMap.put(mainMenuButton3, BoardComponentType.MAIN_MENU_BUTTON);
+		winPanel.add(mainMenuButton3);
 		
 		JPanel emptyPanel = new JPanel();
 		
@@ -215,6 +229,7 @@ public class BoardView {
 		menuPanel.add(startPanel, BoardPanels.START.toString());
 		menuPanel.add(editPanel, BoardPanels.EDIT.toString());
 		menuPanel.add(playPanel, BoardPanels.PLAY.toString());
+		menuPanel.add(winPanel, BoardPanels.TO_MAIN_MENU.toString());
 		menuPanel.add(emptyPanel, BoardPanels.EMPTY.toString());
 		
 		GridBagConstraints gbc_menuPanel = new GridBagConstraints();
@@ -317,7 +332,7 @@ public class BoardView {
 	 * @param obj a button object
 	 * @return the position on the board this button occupies or null if the object is invalid
 	 */
-	public Vector2D lookupButtonPosition(Object obj) {
+	public Position lookupButtonPosition(Object obj) {
 		if (!buttonPositionMap.containsKey(obj)) {
 			// Return null if the object is not a button
 			return null;
@@ -333,7 +348,7 @@ public class BoardView {
 	public void drawModel(BoardModel model) {
 		for (int y = 0; y < BOARD_HEIGHT; y++) {
 			for (int x = 0; x < BOARD_WIDTH; x++) {
-				PlayerColor currentColor = model.getGridPiece(new Vector2D(x, y));
+				PlayerColor currentColor = model.getGridPiece(new Position(x, y));
 				// Depending on the piece at this x,y position draw the correct color piece on the screen
 				if (currentColor == PlayerColor.BLUE) {
 					pieceGrid[x][y].setIcon(bluePiece);
@@ -351,7 +366,7 @@ public class BoardView {
 	 * at a certain spot.
 	 * @param position the position of the button to highlight
 	 */
-	public void highlightPiece(Vector2D position) {
+	public void highlightPiece(Position position) {
 		JButton button = pieceGrid[position.x][position.y];
 		Icon buttonIcon = button.getIcon();
 		if (buttonIcon == emptyPiece) {

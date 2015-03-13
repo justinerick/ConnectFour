@@ -12,5 +12,6 @@ public enum BoardComponentType {
 	NONE_BUTTON,
 	DONE_BUTTON,
 	LOAD_BUTTON,
-	SAVE_BUTTON
+	SAVE_BUTTON,
+	MAIN_MENU_BUTTON
 }

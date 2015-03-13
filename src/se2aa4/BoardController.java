@@ -45,8 +45,8 @@ public class BoardController implements ActionListener, Observer {
 		panelMap.put(GameState.START_STATE, BoardPanels.START);
 		panelMap.put(GameState.EDIT_STATE, BoardPanels.EDIT);
 		panelMap.put(GameState.PLAY_STATE, BoardPanels.PLAY);
-		panelMap.put(GameState.WIN_STATE, BoardPanels.EMPTY);
-		panelMap.put(GameState.DRAW_STATE, BoardPanels.EMPTY);
+		panelMap.put(GameState.WIN_STATE, BoardPanels.TO_MAIN_MENU);
+		panelMap.put(GameState.DRAW_STATE, BoardPanels.TO_MAIN_MENU);
 	}
 	
 	/**
@@ -66,7 +66,7 @@ public class BoardController implements ActionListener, Observer {
 		case BOARD_BUTTON:
 			// If a button on the game board was pressed in the edit state
 			// set that position to be the current edit color
-			Vector2D buttonPosition = view.lookupButtonPosition(e.getSource());
+			Position buttonPosition = view.lookupButtonPosition(e.getSource());
 			if (stateModel.getState() == GameState.EDIT_STATE) {
 				boardModel.setGridPiece(buttonPosition, stateModel.getEditColor());
 			} else if (stateModel.getState() == GameState.PLAY_STATE) {
@@ -133,10 +133,10 @@ public class BoardController implements ActionListener, Observer {
 				}
 				
 				// Make sure there are no floating pieces and if there is highlight them
-				Vector2D[] errors = boardModel.getErrorPositions();
+				Position[] errors = boardModel.getErrorPositions();
 				if (errors != null) {
 					errorMessage = "There are floating pieces";
-					for (Vector2D position : errors) {
+					for (Position position : errors) {
 						view.highlightPiece(position);
 					}
 					valid = false;
@@ -154,6 +154,8 @@ public class BoardController implements ActionListener, Observer {
 			break;
 		case LOAD_BUTTON:
 			try {
+				// Load the models from files and if an error happens
+				// display an appropriate message
 				stateModel.loadFromFile(stateFileName);
 				boardModel.loadFromFile(boardFileName);
 				view.setStatusLabel("Load successful.");
@@ -171,6 +173,9 @@ public class BoardController implements ActionListener, Observer {
 			} catch (IOException exception) {
 				view.setStatusLabel("An error occured while saving.");
 			}
+			break;
+		case MAIN_MENU_BUTTON:
+			stateModel.setState(GameState.START_STATE);
 			break;
 		default:
 			// This should never happen
@@ -214,12 +219,17 @@ public class BoardController implements ActionListener, Observer {
 				// If a player won the game display a winning message
 				view.setTitleLabel(currentPlayer.toString() + " won!");
 				// Highlight the winning connect four pieces
-				for (Vector2D winPosition : boardModel.getWinningPieces()) {
+				for (Position winPosition : boardModel.getWinningPieces()) {
 					view.highlightPiece(winPosition);
 				}
 			} else if (currentState == GameState.DRAW_STATE) {
 				// If there is a draw display the draw message
 				view.setTitleLabel("Draw :(");
+			} else if (currentState == GameState.START_STATE) {
+				// If the state is reset to the start state
+				// reset the message and the board pieces
+				view.setTitleLabel("Welcome");
+				boardModel.reset();
 			}
 			
 			// Can clear the status if the state changes

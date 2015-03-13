@@ -20,12 +20,7 @@ public class BoardModel extends Observable {
 	 */
 	public BoardModel() {
 		pieceGrid = new PlayerColor[GRID_WIDTH][GRID_HEIGHT];
-		
-		for (int x = 0; x < GRID_WIDTH; x++) {
-			for (int y = 0; y < GRID_HEIGHT; y++) {
-				pieceGrid[x][y] = PlayerColor.NONE;
-			}
-		}
+		reset();
 	}
 
 	/**
@@ -49,7 +44,7 @@ public class BoardModel extends Observable {
 	 * @param position the position on the board to change the color of
 	 * @param color the color to set that position to
 	 */
-	public void setGridPiece(Vector2D position, PlayerColor color) {
+	public void setGridPiece(Position position, PlayerColor color) {
 		pieceGrid[position.x][position.y] = color;
 		setChanged();
 		notifyObservers();
@@ -60,7 +55,7 @@ public class BoardModel extends Observable {
 	 * @param position the position on the board to check the color of
 	 * @return return the color of of that position
 	 */
-	public PlayerColor getGridPiece(Vector2D position) {
+	public PlayerColor getGridPiece(Position position) {
 		return pieceGrid[position.x][position.y];
 	}
 	
@@ -68,7 +63,7 @@ public class BoardModel extends Observable {
 	 * Finds all error positions, which are game pieces floating in mid-air.
 	 * @return an array of error positions or null if there are none
 	 */
-	public Vector2D[] getErrorPositions() {
+	public Position[] getErrorPositions() {
 		
 		//Find the amount of error positions
 		int errorAmt = 0;
@@ -82,12 +77,12 @@ public class BoardModel extends Observable {
 			return null;
 		
 		//Put all found error positions in an array for returning
-		Vector2D[] errorPos = new Vector2D[errorAmt];
+		Position[] errorPos = new Position[errorAmt];
 		int i = 0;
 		for (int x = 0; x < GRID_WIDTH; x++)
 			for (int y = 0; y < GRID_HEIGHT-1; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE && pieceGrid[x][y+1] == PlayerColor.NONE)
-					errorPos[i++] = new Vector2D(x, y);
+					errorPos[i++] = new Position(x, y);
 		return errorPos;
 	}
 	
@@ -96,7 +91,7 @@ public class BoardModel extends Observable {
 	 * @return the color of the first player found with a connect four, or NONE if there is no winner
 	 */
 	public PlayerColor getWinner() {
-		Vector2D[] winner = getWinningPieces();
+		Position[] winner = getWinningPieces();
 		if(winner[0] == null)
 			return PlayerColor.NONE;
 		else
@@ -107,22 +102,22 @@ public class BoardModel extends Observable {
 	 * Determine the locations of the pieces of the winning connect four, if there is one.
 	 * @return an array containing the locations of the four winning pieces, or an empty array (all elements are null) if there is no winner
 	 */
-	public Vector2D[] getWinningPieces(){
+	public Position[] getWinningPieces(){
 		
 		PlayerColor checkColor = PlayerColor.NONE;
-		Vector2D[] winPieces = new Vector2D[4];
+		Position[] winPieces = new Position[4];
 
 		//Check the leftmost spots of all possible horizontal connect fours
 		for (int x = 0; x < GRID_WIDTH-3; x++)				//All possible starting points
 			for (int y = 0; y < GRID_HEIGHT; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){	//Check for a red or blue piece in that spot
 					checkColor = pieceGrid[x][y];				//Use 'checkColor' to hold the color of this potential win
-					winPieces[0] = new Vector2D(x, y);
+					winPieces[0] = new Position(x, y);
 					for (int i = 1; i < 4; i++){				//Check if the other 3 spots needed are the same color
-						winPieces[i] = new Vector2D(x+i, y);		//Record the location of each spot checked
+						winPieces[i] = new Position(x+i, y);		//Record the location of each spot checked
 						if (pieceGrid[x+i][y] != checkColor){
 							checkColor = PlayerColor.NONE;			//If not set 'checkColor' back to none and stop checking this one
-							winPieces = new Vector2D[4];			//Clear any positions recorded in 'winPieces'
+							winPieces = new Position[4];			//Clear any positions recorded in 'winPieces'
 							break;
 						}
 					}
@@ -135,12 +130,12 @@ public class BoardModel extends Observable {
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
 					checkColor = pieceGrid[x][y];
-					winPieces[0] = new Vector2D(x, y);
+					winPieces[0] = new Position(x, y);
 					for (int i = 1; i < 4; i++){
-						winPieces[i] = new Vector2D(x, y+i);
+						winPieces[i] = new Position(x, y+i);
 						if (pieceGrid[x][y+i] != checkColor){
 							checkColor = PlayerColor.NONE;
-							winPieces = new Vector2D[4];
+							winPieces = new Position[4];
 							break;
 						}
 					}
@@ -153,12 +148,12 @@ public class BoardModel extends Observable {
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
 					checkColor = pieceGrid[x][y];
-					winPieces[0] = new Vector2D(x, y);
+					winPieces[0] = new Position(x, y);
 					for (int i = 1; i < 4; i++){
-						winPieces[i] = new Vector2D(x+i, y+i);
+						winPieces[i] = new Position(x+i, y+i);
 						if (pieceGrid[x+i][y+i] != checkColor){
 							checkColor = PlayerColor.NONE;
-							winPieces = new Vector2D[4];
+							winPieces = new Position[4];
 							break;
 						}	
 					}
@@ -171,12 +166,12 @@ public class BoardModel extends Observable {
 			for (int y = 0; y < GRID_HEIGHT-3; y++)
 				if (pieceGrid[x][y] != PlayerColor.NONE){
 					checkColor = pieceGrid[x][y];
-					winPieces[0] = new Vector2D(x, y);
+					winPieces[0] = new Position(x, y);
 					for (int i = 1; i < 4; i++){
-						winPieces[i] = new Vector2D(x-i, y+i);
+						winPieces[i] = new Position(x-i, y+i);
 						if (pieceGrid[x-i][y+i] != checkColor){
 							checkColor = PlayerColor.NONE;
-							winPieces = new Vector2D[4];
+							winPieces = new Position[4];
 							break;
 						}
 					}
@@ -257,7 +252,7 @@ public class BoardModel extends Observable {
 		// and placing the piece in the first empty spot it finds
 		for (int row = GRID_HEIGHT - 1; row >= 0; row--) {
 			if (pieceGrid[column][row] == PlayerColor.NONE) {
-				setGridPiece(new Vector2D(column, row), color);
+				setGridPiece(new Position(column, row), color);
 				success = true;
 				break;
 			}
@@ -305,6 +300,21 @@ public class BoardModel extends Observable {
 		
 		// This lets the observers know the state has changed
 		// since after loading the state could be very different
+		setChanged();
+		notifyObservers();
+	}
+	
+	/**
+	 * Resets the state of this object to the default state
+	 */
+	public void reset() {
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			for (int y = 0; y < GRID_HEIGHT; y++) {
+				pieceGrid[x][y] = PlayerColor.NONE;
+			}
+		}
+		// The board has changed since it has been cleared so
+		// let the observers know
 		setChanged();
 		notifyObservers();
 	}
