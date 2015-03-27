@@ -171,16 +171,20 @@ public class BoardView {
 		}
 		
 		JPanel startPanel = new JPanel();
-		JButton newGameButton = new JButton("New Game");
+		JButton newGameButton2P = new JButton("New Game 2 Player");
+		JButton newGameButtonAI = new JButton("New Game with AI");
 		JButton editButton = new JButton("Edit");
 		JButton loadButton = new JButton("Load Game");
-		componentMap.put(newGameButton, BoardComponentType.NEW_GAME_BUTTON);
+		componentMap.put(newGameButton2P, BoardComponentType.NEW_GAME_2P_BUTTON);
+		componentMap.put(newGameButtonAI, BoardComponentType.NEW_GAME_AI_BUTTON);
 		componentMap.put(editButton, BoardComponentType.EDIT_BUTTON);
 		componentMap.put(loadButton, BoardComponentType.LOAD_BUTTON);
-		newGameButton.addActionListener(controller);
+		newGameButton2P.addActionListener(controller);
+		newGameButtonAI.addActionListener(controller);
 		editButton.addActionListener(controller);
 		loadButton.addActionListener(controller);
-		startPanel.add(newGameButton);
+		startPanel.add(newGameButton2P);
+		startPanel.add(newGameButtonAI);
 		startPanel.add(loadButton);
 		startPanel.add(editButton);
 		

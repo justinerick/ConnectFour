@@ -22,6 +22,8 @@ public class BoardModel extends Observable {
 		pieceGrid = new PlayerColor[GRID_WIDTH][GRID_HEIGHT];
 		reset();
 	}
+	
+	
 
 	/**
 	 * Find how wide the board is in terms of game piece spaces.
@@ -241,24 +243,68 @@ public class BoardModel extends Observable {
 	
 	/**
 	 * Drops a piece from the top of the board and lets it fall to the lowest
-	 * available position. Returns true if there was room.
+	 * available position. Returns true if there was room. Doesn't notify observers.
 	 * @param column the column to drop the piece into
 	 * @param color the color of the piece to drop
 	 * @return true if the piece fit and false if the column is full
 	 */
-	public boolean dropPiece(int column, PlayerColor color) {
+	private boolean dropPiece(int column, PlayerColor color) {
 		boolean success = false;
 		// This works by trying every spot starting from the bottom
 		// and placing the piece in the first empty spot it finds
 		for (int row = GRID_HEIGHT - 1; row >= 0; row--) {
 			if (pieceGrid[column][row] == PlayerColor.NONE) {
-				setGridPiece(new Position(column, row), color);
+				pieceGrid[column][row] = color;
 				success = true;
 				break;
 			}
 		}
 		
 		return success;
+	}
+	
+	/**
+	 * Drops a piece from the top of the board and lets it fall to the lowest
+	 * available position. Returns true if there was room. Notifies observers of new state.
+	 * @param column the column to drop the piece into
+	 * @param color the color of the piece to drop
+	 * @return true if the piece fit and false if the column is full
+	 */
+	public boolean doMove(int column, PlayerColor color) {
+		boolean success = dropPiece(column, color);
+		if (success) {
+			setChanged();
+			notifyObservers();
+		}
+		
+		return success;
+	}
+	
+	/**
+	 * Drops a piece from the top of the board and lets it fall to the lowest
+	 * available position. Returns true if there was room. Does not notify observers.
+	 * @param column the column to drop the piece into
+	 * @param color the color of the piece to drop
+	 * @return true if the piece fit and false if the column is full
+	 */
+	public boolean doTemporaryMove(int column, PlayerColor color) {
+		return dropPiece(column, color);
+	}
+	
+	/**
+	 * Undoes a previous temporary move by removing a piece.
+	 * Does not notify observers of change.
+	 * @param column the column of the move to undo
+	 */
+	public void undoTemporaryMove(int column) {
+		// This works by trying every spot starting from the top
+		// and removing the first piece it finds
+		for (int row = 0; row < GRID_HEIGHT; row++) {
+			if (pieceGrid[column][row] != PlayerColor.NONE) {
+				pieceGrid[column][row] = PlayerColor.NONE;
+				break;
+			}
+		}
 	}
 	
 	/**
@@ -317,6 +363,22 @@ public class BoardModel extends Observable {
 		// let the observers know
 		setChanged();
 		notifyObservers();
+	}
+	
+	/**
+	 * Get a copy of this board models state but without
+	 * updating the observers.
+	 * @return the copy of this board
+	 */
+	public BoardModel copy() {
+		BoardModel newBoard = new BoardModel();
+		for (int x = 0; x < GRID_WIDTH; x++) {
+			for (int y = 0; y < GRID_HEIGHT; y++) {
+				newBoard.pieceGrid[x][y] = pieceGrid[x][y];
+			}
+		}
+		
+		return newBoard;
 	}
 }
 

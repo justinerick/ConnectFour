@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.SwingWorker;
+
 /**
  * This class is responsible for listening to the user input
  * events that the view creates and reacting to them by updating
@@ -70,28 +72,24 @@ public class BoardController implements ActionListener, Observer {
 			if (stateModel.getState() == GameState.EDIT_STATE) {
 				boardModel.setGridPiece(buttonPosition, stateModel.getEditColor());
 			} else if (stateModel.getState() == GameState.PLAY_STATE) {
-				// If the piece was successfully added
-				if (boardModel.dropPiece(buttonPosition.x, stateModel.getCurrentPlayer())) {
-					// Check if this move is a winning move
-					PlayerColor winner = boardModel.getWinner();
-					// If there is no winner it is the next player's turn
-					if (winner == PlayerColor.NONE)  {
-						stateModel.nextTurn();
-					} else {
-						// If there is a winner go to the win state
-						stateModel.setState(GameState.WIN_STATE);
+				// Make sure it's a humans turn
+				if (stateModel.getCurrentPlayer() != stateModel.getAIPlayer()) {
+					// If the piece was successfully added
+					if (boardModel.doMove(buttonPosition.x, stateModel.getCurrentPlayer())) {
+							stateModel.nextTurn();
 					}
-				}
-				
-				// If there are no more empty spaces and there was no winner, there must be a draw
-				if (boardModel.getPieceCount(PlayerColor.NONE) == 0 && stateModel.getState() != GameState.WIN_STATE) {
-					stateModel.setState(GameState.DRAW_STATE);
 				}
 			}
 			break;
-		case NEW_GAME_BUTTON:
-			stateModel.setState(GameState.PLAY_STATE);
+		case NEW_GAME_2P_BUTTON:
+			stateModel.setAIPlayer(PlayerColor.NONE);
 			stateModel.setCurrentPlayer(boardModel.getStartPlayer());
+			stateModel.setState(GameState.PLAY_STATE);
+			break;
+		case NEW_GAME_AI_BUTTON:
+			stateModel.setAIPlayer(PlayerColor.BLUE);
+			stateModel.setCurrentPlayer(boardModel.getStartPlayer());
+			stateModel.setState(GameState.PLAY_STATE);
 			break;
 		case EDIT_BUTTON:
 			stateModel.setState(GameState.EDIT_STATE);
@@ -212,12 +210,28 @@ public class BoardController implements ActionListener, Observer {
 			PlayerColor currentPlayer = stateModel.getCurrentPlayer();
 			if (currentState == GameState.PLAY_STATE) {
 				// If the current player is NONE that is invalid so ignore it
-				if (currentPlayer != PlayerColor.NONE) {
+				if (stateModel.getAIPlayer() == currentPlayer) {
+					view.setTitleLabel(currentPlayer.toString() + "'s turn (AI)");
+				} else if (currentPlayer != PlayerColor.NONE) {
 					view.setTitleLabel(currentPlayer.toString() + "'s turn");
+				}
+				
+				// Check if the previous move was a winning move
+				PlayerColor winner = boardModel.getWinner();
+				// If there is no winner it is the next player's turn
+				if (winner != PlayerColor.NONE)  {
+					// If there is a winner go to the win state
+					stateModel.setState(GameState.WIN_STATE);
+				}
+				
+				// If there are no more empty spaces and there was no winner, there must be a draw
+				if (boardModel.getPieceCount(PlayerColor.NONE) == 0 && stateModel.getState() != GameState.WIN_STATE) {
+					stateModel.setState(GameState.DRAW_STATE);
 				}
 			} else if (currentState == GameState.WIN_STATE) {
 				// If a player won the game display a winning message
-				view.setTitleLabel(currentPlayer.toString() + " won!");
+				// The player who won is the player on the previous turn
+				view.setTitleLabel(currentPlayer.opponent().toString() + " won!");
 				// Highlight the winning connect four pieces
 				for (Position winPosition : boardModel.getWinningPieces()) {
 					view.highlightPiece(winPosition);
@@ -230,6 +244,43 @@ public class BoardController implements ActionListener, Observer {
 				// reset the message and the board pieces
 				view.setTitleLabel("Welcome");
 				boardModel.reset();
+			}
+			
+			// If it's the AI's turn, figure out the next move and do it
+			// Run the AI on another thread to keep the GUI responsive
+			if (stateModel.getState() == GameState.PLAY_STATE && stateModel.getAIPlayer() == currentPlayer) {
+		    	SwingWorker<Integer, Object> worker = new SwingWorker<Integer, Object>() {
+
+		    		@Override
+		    		protected Integer doInBackground() throws Exception {
+		    			// Calculate the next move
+		    			ConnectFourAI ai = new ConnectFourAI(boardModel.copy());
+		    			long startTime = System.nanoTime();
+		    			int bestMove = ai.getBestMove(currentPlayer);
+		    			// Normalize the AI's turn to always take 1 second
+		    			long sleepTime = 1000000000 - (System.nanoTime() - startTime);
+		    			if (sleepTime > 0) {
+		    				try {
+		    					Thread.sleep(sleepTime / 1000000);
+		    				} catch (InterruptedException e) {}
+		    			}
+		    			
+		    			return bestMove;
+		    		}
+		    		
+		    		@Override
+		    		protected void done() {
+		    			// If the move has been calculated, do it
+		    			try {
+							boardModel.doMove(get(), currentPlayer);
+						} catch (Exception ignore) {
+						}
+		    			stateModel.nextTurn();
+		    		}
+		    		
+		    	};
+		    	// Run the AI thread
+		    	worker.execute();
 			}
 			
 			// Can clear the status if the state changes

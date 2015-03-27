@@ -7,5 +7,16 @@ package se2aa4;
 public enum PlayerColor {
 	NONE,
 	BLUE,
-	RED
+	RED;
+	
+	/**
+	 * Get the opposite player
+	 * @return the other player
+	 */
+	public PlayerColor opponent() {
+		if (this == NONE) {
+			return NONE;
+		}
+		return (this == BLUE) ? RED : BLUE;
+	}
 }

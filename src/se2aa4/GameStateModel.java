@@ -15,6 +15,7 @@ public class GameStateModel extends Observable {
 	private GameState state;
 	private PlayerColor editColor;
 	private PlayerColor currentPlayer;
+	private PlayerColor aiPlayer;
 	
 	/**
 	 * Initialize in the state of GameState.START_STATE.
@@ -23,6 +24,7 @@ public class GameStateModel extends Observable {
 		state = GameState.START_STATE;
 		editColor = PlayerColor.NONE;
 		currentPlayer = PlayerColor.NONE;
+		aiPlayer = PlayerColor.NONE;
 	}
 	
 	/**
@@ -67,12 +69,11 @@ public class GameStateModel extends Observable {
 	
 	/**
 	 * Sets the current player. Only accepts actual players,
-	 * it does nothing is NONE is passed in. Also the current
-	 * state needs to be the PLAY_STATE.
+	 * it does nothing is NONE is passed in.
 	 * @param player the new current player
 	 */
 	public void setCurrentPlayer(PlayerColor player) {
-		if (player != PlayerColor.NONE && state == GameState.PLAY_STATE) {
+		if (player != PlayerColor.NONE) {
 			currentPlayer = player;
 			// This lets the observers know the state has changed
 			setChanged();
@@ -97,6 +98,25 @@ public class GameStateModel extends Observable {
 	}
 	
 	/**
+	 * Set which player is the AI player.
+	 * @param player
+	 */
+	public void setAIPlayer(PlayerColor player) {
+			aiPlayer = player;
+			// This lets the observers know the state has changed
+			setChanged();
+			notifyObservers();
+	}
+	
+	/**
+	 * If there is an AI player, get which player it is.
+	 * @return the AI player or NONE if there isn't one
+	 */
+	public PlayerColor getAIPlayer() {
+		return aiPlayer;
+	}
+	
+	/**
 	 * Captures the current state of this object and stores it in a file
 	 * for later retrieval.
 	 * @param fileName the file to store the state in
@@ -108,6 +128,7 @@ public class GameStateModel extends Observable {
 		// can be safely stored in a byte
 		outStream.writeByte(state.ordinal());
 		outStream.writeByte(currentPlayer.ordinal());
+		outStream.writeByte(aiPlayer.ordinal());
 		
 		outStream.close();
 	}
@@ -124,6 +145,7 @@ public class GameStateModel extends Observable {
 		// and convert them back into enums
 		state = GameState.values()[inStream.readByte()];
 		currentPlayer = PlayerColor.values()[inStream.readByte()];
+		aiPlayer = PlayerColor.values()[inStream.readByte()];
 		
 		inStream.close();
 		
