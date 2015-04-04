@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Observable;
 import java.util.Observer;
 
+import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
 /**
@@ -173,7 +174,18 @@ public class BoardController implements ActionListener, Observer {
 			}
 			break;
 		case MAIN_MENU_BUTTON:
-			stateModel.setState(GameState.START_STATE);
+			// Show the user a warning if they are in the play state
+			boolean success = true;
+			if (stateModel.getState() == GameState.PLAY_STATE) {
+				int result = JOptionPane.showConfirmDialog(null, "Are you sure you want to go to the main menu? All progress will be lost.", "Confirm", JOptionPane.YES_NO_OPTION);
+				if (result != JOptionPane.YES_OPTION) {
+					success = false;
+				}
+			}
+			
+			if (success) {
+				stateModel.setState(GameState.START_STATE);
+			}
 			break;
 		default:
 			// This should never happen
